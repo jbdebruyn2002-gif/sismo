@@ -1,0 +1,3 @@
+# Netlify : publie le dossier site/ (page + manifeste + icônes), généré par run.py.
+[build]
+  publish = "site"
