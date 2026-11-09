@@ -1,0 +1,37 @@
+name: Actualiser Sismo
+# Chaque jour : télécharge les données FRED (API officielle, clé dans le secret FRED_API_KEY),
+# recalcule le baromètre et enregistre le nouveau site. Netlify, relié à ce dépôt, republie tout seul.
+on:
+  schedule:
+    - cron: "17 7 * * *"   # tous les jours vers 7 h 17 UTC (8 h 17 à Paris en hiver)
+  workflow_dispatch: {}    # bouton « Run workflow » pour lancer à la main
+permissions:
+  contents: write
+defaults:
+  run:
+    working-directory: sismo-github   # le projet est dans ce dossier du dépôt
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: sismo-github/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q tests
+      - name: Télécharger les données et recalculer
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          if [ -z "$FRED_API_KEY" ]; then echo "Secret FRED_API_KEY manquant : Settings > Secrets and variables > Actions."; exit 1; fi
+          python run.py
+      - name: Enregistrer le nouveau site
+        run: |
+          git config user.name "sismo-bot"
+          git config user.email "sismo-bot@users.noreply.github.com"
+          git add web/data.js data/raw dist/barometre.html site
+          git diff --cached --quiet || git commit -m "Mise à jour des données du $(date -u +%Y-%m-%d)"
+          git push
