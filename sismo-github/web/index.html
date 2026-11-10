@@ -270,6 +270,18 @@ body:not(.simple) .b-more{display:none}
 .st .rg b{font-weight:600;color:var(--ink)}
 .st .rg .lv::before{content:" · "}
 
+/* variation décomposée */
+.mv-sum{margin:6px 0 14px;font-size:15px;max-width:75ch}
+.mv{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(140px,2fr) 64px;gap:7px 14px;align-items:center;font-size:14px}
+@media(max-width:600px){.mv{grid-template-columns:minmax(0,1fr) minmax(90px,1.2fr) 52px;font-size:13px}}
+.mv .lb{min-width:0}
+.mv .tr{position:relative;height:12px}
+.mv .tr::before{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;border-left:1px solid var(--axis)}
+.mv .tr i{position:absolute;top:2px;height:8px;border-radius:2px}
+.mv .vl{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.mv .tot{font-weight:600;color:var(--ink);border-top:1px solid var(--grid);padding-top:7px}
+.t-rib-lab{font-size:11px;fill:var(--ink2)}
+
 /* pourquoi */
 .why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 @media(max-width:860px){.why{grid-template-columns:minmax(0,1fr)}}
@@ -337,6 +349,12 @@ footer a{color:var(--accent)}
         </details>
       </div>
     </div>
+  </section>
+
+  <section class="panel move" aria-labelledby="mv-t">
+    <h2 id="mv-t">Pourquoi le score a bougé sur 3 mois</h2>
+    <p class="mv-sum" id="mvSum"></p>
+    <div class="mv" id="mvBars" role="list"></div>
   </section>
 
   <section class="why" aria-label="Ce qui explique le score">
@@ -512,6 +530,26 @@ function sparkPath(vals,W,Ht){
   [["simple","Vue simple"],["complet","Vue complète"]].forEach(function(m){var b=H("button",{type:"button","data-m":m[0],"aria-pressed":String(MODE===m[0]),text:m[1]});b.onclick=function(){setMode(m[0])};ms.appendChild(b)});
   $("bMore").onclick=function(){setMode("complet");var h=document.querySelector(".hero");if(h)h.scrollIntoView({behavior:"smooth",block:"start"})};
 })();
+(function moves(){
+  var B=D.summary||{},dr=(B.drivers||[]).slice(),tot=C.change_3m;
+  var sec=$("mv-t").parentNode;
+  if(tot==null||!dr.length){sec.hidden=true;return}
+  $("mvSum").textContent=B.move||"";
+  dr.sort(function(a,b){return a.points-b.points});
+  dr.sort(function(a,b){return Math.abs(b.points)-Math.abs(a.points)});var shown=dr.slice(0,6).sort(function(a,b){return a.points-b.points});
+  var others=tot-shown.reduce(function(a,b){return a+b.points},0);
+  var rows=shown.map(function(d){return [d.label,d.points]});
+  if(Math.abs(others)>=0.05)rows.push(["Autres indicateurs",others]);
+  var mx=Math.max.apply(null,rows.map(function(r){return Math.abs(r[1])}).concat([Math.abs(tot),1]));
+  var box=$("mvBars");
+  function bar(v){var w=Math.abs(v)/mx*50;return H("span",{cls:"tr"},H("i",{style:(v<0?"right:50%;":"left:50%;")+"width:"+w.toFixed(1)+"%;background:"+(v<0?"var(--neg)":"var(--pos)")}))}
+  rows.forEach(function(r){
+    box.appendChild(H("span",{cls:"lb",role:"listitem",text:r[0]}));box.appendChild(bar(r[1]));
+    box.appendChild(H("span",{cls:"vl",text:sg(r[1],1)+" pt"}))});
+  box.appendChild(H("span",{cls:"lb tot",text:"Variation du score"}));
+  var tb=bar(tot);tb.classList.add("tot");box.appendChild(tb);
+  box.appendChild(H("span",{cls:"vl tot",text:sg(tot,1)+" pt"}));
+})();
 (function alerts(){
   var box=$("alerts"),src=META.sources||{};
   if(META.demo){box.appendChild(H("div",{cls:"note",role:"alert"},H("b",{text:"Données de démonstration. "}),"Les chiffres de cette page sont simulés et ne proviennent d'aucune source réelle. Lancez « python run.py » pour récupérer les données réelles."));return}
@@ -523,11 +561,20 @@ function sparkPath(vals,W,Ht){
     miss.forEach(function(i){ul.appendChild(H("li",{text:i.label+" : indisponible ("+(i.unavailable_reason||"série non récupérée")+"), son poids est redistribué."}))});
     box.appendChild(H("div",{cls:"note",role:"alert"},H("b",{text:"Collecte incomplète."}),ul))}
 })();
+var LVCOL=["var(--grid)","var(--grid)","var(--warning)","var(--serious)","var(--critical)"],
+    LVLAB=["Calme","Secousses légères","Vigilance","Alerte","Séisme"];
+function ribbon(svg,pts,x,y0,h,W,right){
+  var n=pts.length,step=n>1?(x(1)-x(0)):8;
+  pts.forEach(function(p,i){var lv=p[3];if(lv==null)return;
+    var x0=Math.max(x(0),x(i)-step/2),x1=Math.min(x(n-1),x(i)+step/2);
+    S("rect",{x:x0,y:y0,width:Math.max(1,x1-x0+0.4),height:h,fill:LVCOL[lv],opacity:lv>=2?1:.6},svg)});
+  var t=S("text",{x:W-right+8,y:y0+h-1,"class":"t-rib-lab"},svg);t.textContent="alerte";
+}
 var traceIdx=null;
 function drawTrace(){
   var box=$("traceBox");if(!box)return;clear(box);
   var pts=C.history.slice(-36),n=pts.length;if(n<2)return;
-  var W=Math.max(260,box.clientWidth-2),Ht=W<520?170:200,m={l:8,r:74,t:12,b:24};
+  var W=Math.max(260,box.clientWidth-2),Ht=W<520?186:216,m={l:8,r:74,t:12,b:40};
   var svg=S("svg",{width:W,height:Ht,viewBox:"0 0 "+W+" "+Ht,role:"img"},box);
   svg.setAttribute("aria-label","Score sur trois ans, de "+Math.round(pts[0][1])+" à "+Math.round(pts[n-1][1])+" sur 100");
   var x=function(i){return m.l+i*(W-m.l-m.r)/(n-1)},y=function(v){return m.t+(100-v)*(Ht-m.t-m.b)/100};
@@ -536,6 +583,7 @@ function drawTrace(){
     var t=S("text",{x:W-m.r+8,y:(y(b[0])+y(b[1]))/2+4,"class":"t-lab"},svg);t.textContent=b[3]});
   S("line",{x1:m.l,x2:W-m.r,y1:y(50),y2:y(50),stroke:"var(--axis)","stroke-width":1},svg);
   pts.forEach(function(p,i){if(p[0].slice(5,7)==="01"){var t=S("text",{x:x(i),y:Ht-6,"text-anchor":"middle","class":"t-lab"},svg);t.textContent=p[0].slice(0,4)}});
+  ribbon(svg,pts,x,Ht-m.b+6,9,W,m.r);
   S("polyline",{points:pts.map(function(p,i){return x(i)+","+y(p[1])}).join(" "),"class":"t-line"},svg);
   var lx=x(n-1),ly=y(pts[n-1][1]);
   S("circle",{cx:lx,cy:ly,r:5,fill:"var(--accent)",stroke:"var(--surface)","stroke-width":2},svg);
@@ -543,7 +591,9 @@ function drawTrace(){
   function at(i){i=Math.max(0,Math.min(n-1,i));traceIdx=i;var p=pts[i];
     cross.setAttribute("x1",x(i));cross.setAttribute("x2",x(i));cross.setAttribute("visibility","visible");
     dot.setAttribute("cx",x(i));dot.setAttribute("cy",y(p[1]));dot.setAttribute("visibility","visible");
-    showTip(box,x(i),y(p[1]),[{key:"var(--ink)",value:nf(p[1],0)+" / 100",name:"score"}],fmon(p[0]))}
+    var rows=[{key:"var(--ink)",value:nf(p[1],0)+" / 100",name:"score"}];
+    if(p[3]!=null)rows.push({key:LVCOL[p[3]],value:p[3]+"/4",name:LVLAB[p[3]]});
+    showTip(box,x(i),y(p[1]),rows,fmon(p[0]))}
   function off(){hideTip();traceIdx=null;cross.setAttribute("visibility","hidden");dot.setAttribute("visibility","hidden")}
   var hit=S("rect",{x:m.l,y:m.t,width:W-m.l-m.r,height:Ht-m.t-m.b,fill:"transparent"},svg);
   hit.addEventListener("pointermove",function(e){var r=svg.getBoundingClientRect();at(Math.round((e.clientX-r.left-m.l)/((W-m.l-m.r)/(n-1))))});
@@ -733,6 +783,7 @@ function btSetup(){
   lg.appendChild(H("span",null,H("i",{cls:"key-l",style:"background:var(--accent)"}),"Score global"));
   lg.appendChild(H("span",null,H("i",{cls:"key-l",style:"background:var(--muted)"}),"Poids égaux"));
   lg.appendChild(H("span",null,H("i",{cls:"key-r",style:"background:var(--ink);opacity:.15"}),"Crise"));
+  [[2,"Vigilance"],[3,"Alerte"],[4,"Séisme"]].forEach(function(k){lg.appendChild(H("span",null,H("i",{cls:"key-r",style:"background:"+LVCOL[k[0]]}),k[1]))});
   // tableau des épisodes
   var t=$("btTable");
   var heads=["Épisode","Période","12 mois avant","Au début","Plus bas","Variation","Alerte max. avant","Alerte max. pendant","Plus bas à poids égaux"];
@@ -757,7 +808,7 @@ function drawBt(){
   if(!BT||!BT.available)return;
   var box=$("btBox");if(box.hidden)return;clear(box);
   var pts=BT.history,n=pts.length;
-  var W=Math.max(280,box.clientWidth),Ht=W<560?240:300,m={l:36,r:44,t:22,b:26};
+  var W=Math.max(280,box.clientWidth),Ht=W<560?256:316,m={l:36,r:44,t:22,b:42};
   var svg=S("svg",{width:W,height:Ht,viewBox:"0 0 "+W+" "+Ht,role:"img"},box);
   svg.setAttribute("aria-label","Historique du score global depuis "+fmon(pts[0][0])+", avec "+BT.episodes.length+" crises surlignées");
   var x=function(i){return n===1?m.l:m.l+i*(W-m.l-m.r)/(n-1)},y=function(v){return m.t+(100-v)*(Ht-m.t-m.b)/100};
@@ -775,6 +826,7 @@ function drawBt(){
   var step=W<560?10:5,first=+pts[0][0].slice(0,4);
   pts.forEach(function(p,i){var yr=+p[0].slice(0,4);if(p[0].slice(5,7)==="01"&&yr%step===0){
     var t=S("text",{x:x(i),y:Ht-6,"text-anchor":"middle"},svg);t.textContent=yr}});
+  ribbon(svg,pts,x,Ht-m.b+6,9,W,m.r);
   var eq=pts.map(function(p,i){return p[2]==null?null:x(i)+","+y(p[2])}).filter(Boolean);
   if(eq.length>1)S("polyline",{points:eq.join(" "),"class":"l-eq"},svg);
   S("polyline",{points:pts.map(function(p,i){return x(i)+","+y(p[1])}).join(" "),"class":"l-main"},svg);
@@ -790,6 +842,7 @@ function drawBt(){
     var ep=null;eps.forEach(function(o,k){var on=i>=o.a&&i<=o.b;bandEls[k].setAttribute("class","band"+(on?" band-hi":""));if(on)ep=o.e});
     var rows=[{key:"var(--accent)",value:nf(p[1],0)+" / 100",name:"Score global"}];
     if(p[2]!=null)rows.push({key:"var(--muted)",value:nf(p[2],0)+" / 100",name:"Poids égaux"});
+    if(p[3]!=null)rows.push({key:LVCOL[p[3]],value:p[3]+"/4",name:"alerte : "+LVLAB[p[3]]});
     if(ep)rows.push({value:"",name:ep.name});
     showTip(box,x(i),y(p[1]),rows,fmon(p[0]))}
   function off(){hideTip();btIdx=null;[cross,d1,d2].forEach(function(e){e.setAttribute("visibility","hidden")});bandEls.forEach(function(b){b.setAttribute("class","band")})}

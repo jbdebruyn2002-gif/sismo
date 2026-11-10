@@ -163,3 +163,12 @@ def test_regime_boundaries():
 def test_commentary_mentions_robustness_and_drivers(result):
     text = " ".join(result["commentary"])
     assert "Score global" in text and "poids égaux" in text and "Poids le plus élevé" in text
+
+
+def test_drivers_sum_exactly_to_three_month_change():
+    from barometre import config
+    res = compute(demo.make_raw(date(2026, 11, 2)), date(2026, 11, 2), config.indicators_for("global"))
+    c = res["composite"]
+    assert c["drivers_3m"]
+    assert abs(sum(d["points"] for d in c["drivers_3m"]) - c["change_3m"]) < 0.05
+    assert len(c["history"][-1]) == 4 and c["history"][-1][3] in range(5)

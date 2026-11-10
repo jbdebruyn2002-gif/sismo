@@ -49,6 +49,8 @@ Ouvrir `dist/barometre.html` : fichier unique, autonome (c'est le livrable HTML)
 - `barometre/collect.py` : téléchargement FRED, copie locale dans `data/raw/`.
 - `barometre/scoring.py` : mensualisation (délai de publication), normalisation sans regard dans le futur, score pondéré, contributions.
 - `barometre/resume.py` : résumé « En bref » en phrases simples (règles fixes, à partir des chiffres ; phrases de chaque indicateur dans `config.py`, clés `plain_good` et `plain_bad`).
+- `barometre/alerte.py` : échelle d'alerte 0-4 (niveau du score + vitesse de baisse sur 3 mois).
+- `barometre/notify.py` : avis par e-mail (ticket GitHub) quand le niveau d'alerte d'une zone change.
 - `barometre/backtest.py` : test sur le passé (score avant et pendant les crises listées dans `config.EPISODES`, fausses alertes).
 - `web/index.html` : tableau de bord (SVG sans bibliothèque).
 

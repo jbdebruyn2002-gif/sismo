@@ -43,3 +43,13 @@ def test_real_zones_produce_summary():
         assert s["headline"].startswith(config.zone_info(z)["label"])
         assert s["reliability"] and "crises testées" in s["reliability"]
         assert all(i["plain_good"] and i["plain_bad"] for i in res["indicators"])
+
+
+def test_move_sentence_cites_biggest_drivers():
+    dr = [{"id": "oil", "label": "Pétrole", "points": -2.74}, {"id": "nikkei", "label": "Nikkei", "points": -2.07},
+          {"id": "vol", "label": "VIX", "points": -1.17}, {"id": "cny", "label": "Yuan", "points": 0.4},
+          {"id": "jp_gdp", "label": "PIB", "points": -0.1}]
+    t = resume.move_sentence(-8.6, dr)
+    assert t == "9 points perdus en 3 mois, dont −2,7 dus au pétrole, −2,1 dus à la Bourse de Tokyo et −1,2 dus à la volatilité (VIX)."
+    assert resume.move_sentence(0.2, dr).startswith("Le score est stable")
+    assert resume.move_sentence(None, dr) is None

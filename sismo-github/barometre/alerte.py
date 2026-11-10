@@ -25,9 +25,12 @@ LEVELS = [
     dict(level=2, label="Vigilance", kind="warning",
          meaning="Situation à surveiller : un scénario de dégradation devient plausible."),
     dict(level=3, label="Alerte", kind="serious",
-         meaning="Signal d'alerte : par le passé, ce niveau a accompagné ou précédé la plupart des crises."),
+         meaning="Signal d'alerte : par le passé, ce niveau a accompagné ou précédé la plupart des crises, "
+                 "avec environ 7 % de fausses alertes."),
     dict(level=4, label="Séisme", kind="critical",
-         meaning="Niveau de crise : conditions comparables aux pires moments de 2008, 2020 ou 2022."),
+         meaning="Niveau maximal : les conditions sont dégradées et se détériorent très vite. Par le passé, "
+                 "ce niveau a été atteint dans l'année précédant presque toutes les crises testées, mais aussi lors de "
+                 "fausses alertes (environ 3 % des mois calmes)."),
 ]
 ALERT_FROM = 3          # niveau à partir duquel on parle d'« alerte » dans le test sur le passé
 FAST_DROP, DROP = -10.0, -5.0

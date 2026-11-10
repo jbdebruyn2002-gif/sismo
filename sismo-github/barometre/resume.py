@@ -32,6 +32,38 @@ def trend(change_3m: Optional[float]) -> tuple[str, str]:
     return "stables", "flat"
 
 
+# Désignation courte de chaque indicateur, avec sa préposition (« dus au pétrole »).
+SHORT = {
+    "gdp": "à la croissance américaine", "cpi": "à l'inflation américaine", "equity": "à la Bourse américaine",
+    "curve": "à la courbe des taux américaine", "stress": "aux conditions financières américaines",
+    "vol": "à la volatilité (VIX)", "oil": "au pétrole", "usd": "au dollar",
+    "ea_gdp": "à la croissance européenne", "ea_cpi": "à l'inflation européenne",
+    "ea_spread": "à l'écart de taux Italie-Allemagne", "ea_curve": "à la courbe des taux européenne",
+    "jp_gdp": "à la croissance japonaise", "nikkei": "à la Bourse de Tokyo",
+    "jp_curve": "à la courbe des taux japonaise", "cny": "au yuan",
+}
+MIN_MOVE = 0.3   # en dessous, une contribution à la variation n'est pas citée
+
+
+def _fr(v: float) -> str:
+    return f"{v:+.1f}".replace(".", ",").replace("-", "−")
+
+
+def move_sentence(total: Optional[float], drivers: list[dict]) -> Optional[str]:
+    """« −9 points en 3 mois, dont −2,7 dus au pétrole et −2,1 à la Bourse de Tokyo. »"""
+    if total is None or not drivers:
+        return None
+    same = [d for d in drivers if abs(d["points"]) >= MIN_MOVE and (d["points"] < 0) == (total < 0)]
+    same.sort(key=lambda d: -abs(d["points"]))
+    if abs(total) < 0.5 or not same:
+        return f"Le score est stable sur 3 mois ({_fr(total)} point)."
+    parts = [f"{_fr(d['points'])} dus {SHORT.get(d['id'], 'à ' + d['label'])}" for d in same[:3]]
+    lst = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " et " + parts[-1]
+    verb = "perdus" if total < 0 else "gagnés"
+    n = abs(total)
+    return f"{n:.0f} point{'s' if round(n) > 1 else ''} {verb} en 3 mois, dont {lst}."
+
+
 def verdict_sentence(zone: str, score: float, d3: Optional[float], al: dict) -> str:
     """Verdict tranché : niveau d'alerte, puis niveau et vitesse du score en clair."""
     sc = round(score)
@@ -84,6 +116,8 @@ def build(res: dict, zone_label: str) -> dict:
     return dict(
         headline=headline, verdict=_cap(verdict), trend=word, direction=direction,
         meaning=al["meaning"] if al else None,
+        move=move_sentence(c.get("change_3m"), c.get("drivers_3m") or []),
+        drivers=[d for d in (c.get("drivers_3m") or []) if abs(d["points"]) >= MIN_MOVE],
         helps=[dict(id=i["id"], text=_cap(i["plain_good"] or i["label"]), points=round(i["contribution"], 1)) for i in helps],
         hurts=[dict(id=i["id"], text=_cap(i["plain_bad"] or i["label"]), points=round(i["contribution"], 1)) for i in hurts],
         watch=watch, reliability=reliability,

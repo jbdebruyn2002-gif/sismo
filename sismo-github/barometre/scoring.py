@@ -92,6 +92,14 @@ def _weighted(scores: pd.DataFrame, weights: pd.Series, min_share: float, total:
     return out.where(wsum >= min_share * total)
 
 
+def contributions(scores: pd.DataFrame, weights: pd.Series) -> pd.DataFrame:
+    """Points apportés par chaque indicateur au score, mois par mois : poids effectif × (score − 50).
+    Leur somme + 50 redonne exactement le score composite (poids redistribués quand une série manque)."""
+    avail = scores.notna()
+    wsum = avail.mul(weights, axis=1).sum(axis=1).replace(0, np.nan)
+    return (scores - 50).mul(weights, axis=1).div(wsum, axis=0)
+
+
 def _clean(v) -> Optional[float]:
     if v is None:
         return None
@@ -179,6 +187,16 @@ def compute(raw: dict[str, pd.Series], as_of: date, indicators: Optional[list[di
         j = pos - back
         return _clean(series.iloc[j]) if j >= 0 else None
 
+    CONTRIB = contributions(S, W)
+    drivers, move_3m = [], {}
+    if pos - 3 >= 0 and not pd.isna(comp.iloc[pos - 3]):
+        t3 = S.index[pos - 3]
+        for i in ids:
+            d = (0.0 if pd.isna(CONTRIB.loc[t, i]) else CONTRIB.loc[t, i]) - (0.0 if pd.isna(CONTRIB.loc[t3, i]) else CONTRIB.loc[t3, i])
+            move_3m[i] = float(d)
+        total = float(comp.loc[t] - comp.loc[t3])
+        drivers = sorted(({"id": i, "label": cfg_by[i]["label"], "points": round(v, 2)} for i, v in move_3m.items()),
+                         key=lambda r: r["points"])
     avail_t = S.loc[t].notna()
     wsum_t = float((W * avail_t).sum())
     label, kind = regime(float(comp.loc[t]))
@@ -216,11 +234,14 @@ def compute(raw: dict[str, pd.Series], as_of: date, indicators: Optional[list[di
             contribution=round(w_eff * (s_t - 50), 3),
             value=_clean(xs[i].loc[t]), last_obs=pd.Timestamp(obs_date).date().isoformat() if obs_date is not None else None,
             last_raw=_clean(obs_val), change_3m=_clean(s_t - s3) if s3 is not None else None, history=hist,
+            move_3m=_clean(move_3m.get(i)),
         )
         inds.append(base)
 
     ch = lambda b: (_clean(comp.loc[t] - comp.iloc[pos - b]) if pos - b >= 0 and not pd.isna(comp.iloc[pos - b]) else None)
-    comp_hist = [[lab(ts), _clean(comp.loc[ts]), _clean(equal.loc[ts])]
+    LV = alerte.series(comp.loc[:t])
+    comp_hist = [[lab(ts), _clean(comp.loc[ts]), _clean(equal.loc[ts]),
+                  None if pd.isna(LV.get(ts, np.nan)) else int(LV.get(ts))]
                  for ts in S.index[max(0, pos - history_months + 1): pos + 1] if not pd.isna(comp.loc[ts])]
     result = {
         "as_of": as_of_iso,
@@ -229,6 +250,7 @@ def compute(raw: dict[str, pd.Series], as_of: date, indicators: Optional[list[di
             "change_1m": ch(1), "change_3m": ch(3), "change_12m": ch(12),
             "equal_weight_score": _clean(equal.loc[t]),
             "weight_available": round(wsum_t, 3), "history": comp_hist,
+            "drivers_3m": drivers,
         },
         "indicators": inds,
     }
