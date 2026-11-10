@@ -2,11 +2,11 @@
 
 *Comme un sismographe, Sismo cherche à détecter les secousses des marchés avant la crise.*
 
-Score de 0 à 100 des conditions macro-financières, au choix pour les **États-Unis**, l'**Europe** (zone euro),
-l'**Asie** (Japon, Chine) ou le **Monde** (moyenne des trois). 16 indicateurs issus de FRED (données ouvertes, sans clé d'API).
+Score de 0 à 100 des conditions macro-financières, au choix pour les **États-Unis**, l'**Europe**, l'**Asie** (Japon, Corée, Inde, Chine),
+les **Émergents** ou le **Monde** (moyenne des quatre). 26 indicateurs issus de FRED (données ouvertes, sans clé d'API).
 Dans la page, le sélecteur « Zone » change le score, les cartes, les contributions et le test sur le passé.
 En haut de page, le bloc **En bref** résume la zone en phrases simples (ce qui aide, ce qui inquiète, à surveiller) ; le bouton « Vue simple / Vue complète » masque ou affiche le détail.
-Liens directs : `#monde`, `#etats-unis`, `#europe`, `#asie` à la fin de l'adresse.
+Liens directs : `#monde`, `#etats-unis`, `#europe`, `#asie`, `#emergents` à la fin de l'adresse.
 
 ## Mise à jour automatique (recommandé)
 FRED bloque son fichier CSV quand il est demandé par un programme. La voie fiable est l'**API officielle FRED** :
@@ -51,6 +51,7 @@ Ouvrir `dist/barometre.html` : fichier unique, autonome (c'est le livrable HTML)
 - `barometre/resume.py` : résumé « En bref » en phrases simples (règles fixes, à partir des chiffres ; phrases de chaque indicateur dans `config.py`, clés `plain_good` et `plain_bad`).
 - `barometre/alerte.py` : échelle d'alerte 0-4 (niveau du score + vitesse de baisse sur 3 mois).
 - `barometre/notify.py` : avis par e-mail (ticket GitHub) quand le niveau d'alerte d'une zone change.
+- `barometre/robustesse.py` : solidité des seuils (9 variantes) et comparaison avec des règles naïves (VIX > 25, courbe inversée, score < 50).
 - `barometre/backtest.py` : test sur le passé (score avant et pendant les crises listées dans `config.EPISODES`, fausses alertes).
 - `web/index.html` : tableau de bord (SVG sans bibliothèque).
 

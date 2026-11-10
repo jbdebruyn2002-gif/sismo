@@ -41,6 +41,9 @@ SHORT = {
     "ea_spread": "à l'écart de taux Italie-Allemagne", "ea_curve": "à la courbe des taux européenne",
     "jp_gdp": "à la croissance japonaise", "nikkei": "à la Bourse de Tokyo",
     "jp_curve": "à la courbe des taux japonaise", "cny": "au yuan",
+    "de_equity": "à la Bourse allemande", "kr_equity": "à la Bourse coréenne", "in_equity": "à la Bourse indienne",
+    "krw": "au won", "em_usd": "au dollar face aux devises émergentes", "em_vol": "à la volatilité émergente",
+    "copper": "au cuivre", "brl": "au réal brésilien", "mxn": "au peso mexicain", "inr": "à la roupie",
 }
 MIN_MOVE = 0.3   # en dessous, une contribution à la variation n'est pas citée
 

@@ -132,7 +132,7 @@ def test_too_many_missing_indicators_gives_error():
     for k in ("SP500", "VIXCLS", "NFCI", "GDPC1", "T10Y2Y"):
         del raw[k]
     with pytest.raises(ValueError):
-        compute(raw, AS_OF)
+        compute(raw, AS_OF, config.indicators_for("us"))
 
 
 def test_no_data_gives_error():

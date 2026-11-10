@@ -257,7 +257,14 @@ def compute(raw: dict[str, pd.Series], as_of: date, indicators: Optional[list[di
     lv = alerte.level(float(comp.loc[t]), ch(3))
     result["composite"]["alert"] = alerte.describe(lv)
     result["commentary"] = commentary(result)
-    result["backtest"] = backtest.run(comp.loc[:t], equal.loc[:t], episodes)
+    naive = {}
+    from .config import CATALOG
+    for key, cid in (("vix", "vol"), ("curve", "curve")):
+        cfg = next(c for c in CATALOG if c["id"] == cid)
+        r = raw.get(cfg["series"])
+        if r is not None and len(r.dropna()):
+            naive[key] = transform(to_monthly(r, cfg, as_of), cfg)
+    result["backtest"] = backtest.run(comp.loc[:t], equal.loc[:t], episodes, **naive)
     return result
 
 

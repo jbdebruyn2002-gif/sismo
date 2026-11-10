@@ -14,7 +14,7 @@ from typing import Optional
 
 import pandas as pd
 
-from . import alerte
+from . import alerte, robustesse
 from .config import ALERT_THRESHOLD, EPISODES, LEAD_MONTHS
 
 
@@ -68,7 +68,8 @@ def episode_stats(comp: pd.Series, equal: pd.Series, ep: dict) -> dict:
     return out
 
 
-def run(comp: pd.Series, equal: pd.Series, episodes: list[dict] = EPISODES) -> dict:
+def run(comp: pd.Series, equal: pd.Series, episodes: list[dict] = EPISODES,
+        vix: Optional[pd.Series] = None, curve: Optional[pd.Series] = None) -> dict:
     comp = comp.dropna()
     equal = equal.reindex(comp.index)
     if comp.empty:
@@ -106,7 +107,11 @@ def run(comp: pd.Series, equal: pd.Series, episodes: list[dict] = EPISODES) -> d
     )
     history = [[t.date().isoformat(), _f(comp.loc[t]), _f(equal.loc[t]), None if pd.isna(lv.loc[t]) else int(lv.loc[t])]
                for t in comp.index]
-    return dict(available=True, summary=summary, episodes=eps, history=history, commentary=commentary(summary, eps))
+    rb = robustesse.run(comp, episodes, LEAD_MONTHS, ALERT_THRESHOLD, vix=vix, curve=curve)
+    com = commentary(summary, eps)
+    if robustesse.sentence(rb):
+        com.insert(1, robustesse.sentence(rb))
+    return dict(available=True, summary=summary, episodes=eps, history=history, commentary=com, robustness=rb)
 
 
 def commentary(sm: dict, eps: list[dict]) -> list[str]:

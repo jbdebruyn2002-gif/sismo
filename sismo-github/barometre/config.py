@@ -166,6 +166,89 @@ CATALOG = [
         norm_why="Z-score inversé : une hausse du nombre de yuans par dollar (yuan qui baisse) fait baisser le score.",
         plain_good="le yuan est plus solide que d'habitude face au dollar", plain_bad="le yuan faiblit plus que d'habitude : signe de sorties de capitaux de Chine",
     ),
+    # ---- Europe : marché actions
+    dict(
+        id="de_equity", label="Marché actions (Allemagne, indice OCDE)", zone="Zone euro", family="Marchés financiers",
+        series="SPASTT01DEM661N", source="FRED (OCDE)", unit="% sur 1 an", freq="mensuelle",
+        transform="pct12", agg="last", lag_months=1, method="zscore", invert=False,
+        why="Premier marché actions de la zone euro. L'indice OCDE de la zone euro n'est plus mis à jour sur FRED depuis janvier 2026 : l'Allemagne sert de mesure de l'appétit pour le risque en Europe.",
+        norm_why="Z-score : la performance sur 12 mois comparée à l'histoire récente de l'indice.",
+        plain_good="la Bourse allemande fait mieux que d'habitude sur un an", plain_bad="la Bourse allemande fait moins bien que d'habitude sur un an",
+    ),
+    # ---- Asie (hors Japon)
+    dict(
+        id="kr_equity", label="Marché actions (Corée du Sud, indice OCDE)", zone="Corée du Sud", family="Marchés financiers",
+        series="SPASTT01KRM661N", source="FRED (OCDE)", unit="% sur 1 an", freq="mensuelle",
+        transform="pct12", agg="last", lag_months=1, method="zscore", invert=False,
+        why="Marché très exposé au commerce mondial et aux semi-conducteurs : souvent l'un des premiers à réagir à un ralentissement asiatique.",
+        norm_why="Z-score : la performance sur 12 mois comparée à l'histoire récente de l'indice.",
+        plain_good="la Bourse coréenne fait mieux que d'habitude sur un an", plain_bad="la Bourse coréenne fait moins bien que d'habitude sur un an",
+    ),
+    dict(
+        id="in_equity", label="Marché actions (Inde, indice OCDE)", zone="Inde", family="Marchés financiers",
+        series="SPASTT01INM661N", source="FRED (OCDE)", unit="% sur 1 an", freq="mensuelle",
+        transform="pct12", agg="last", lag_months=1, method="zscore", invert=False,
+        why="Première économie émergente par la croissance ; sa Bourse résume l'appétit des investisseurs pour l'Asie émergente.",
+        norm_why="Z-score : la performance sur 12 mois comparée à l'histoire récente de l'indice.",
+        plain_good="la Bourse indienne fait mieux que d'habitude sur un an", plain_bad="la Bourse indienne fait moins bien que d'habitude sur un an",
+    ),
+    dict(
+        id="krw", label="Won coréen (contre dollar)", zone="Corée du Sud", family="Flux de capitaux",
+        series="DEXKOUS", source="FRED (Réserve fédérale)", unit="% sur 1 an", freq="quotidienne",
+        transform="pct12", agg="last", lag_months=0, method="zscore", invert=True,
+        why="Une chute rapide du won accompagne les sorties de capitaux d'Asie, comme en 2008.",
+        norm_why="Z-score inversé : une hausse du nombre de wons par dollar (won qui baisse) fait baisser le score.",
+        plain_good="le won est plus solide que d'habitude face au dollar", plain_bad="le won faiblit plus que d'habitude : sorties de capitaux d'Asie",
+    ),
+    # ---- Pays émergents
+    dict(
+        id="em_usd", label="Dollar contre devises émergentes", zone="Émergents", family="Flux de capitaux",
+        series="DTWEXEMEGS", source="FRED (Réserve fédérale)", unit="% sur 1 an", freq="quotidienne",
+        transform="pct12", agg="last", lag_months=0, method="zscore", invert=True,
+        why="Indice du dollar face à un panier de devises émergentes. Quand il monte vite, les capitaux quittent les pays émergents : c'est le signal classique des crises émergentes (2013, 2015, 2018).",
+        norm_why="Z-score inversé : une hausse rapide du dollar face aux devises émergentes fait baisser le score.",
+        plain_good="les devises émergentes tiennent face au dollar", plain_bad="les devises émergentes chutent face au dollar : les capitaux quittent les émergents",
+    ),
+    dict(
+        id="em_vol", label="Volatilité des actions émergentes (VXEEM)", zone="Émergents", family="Volatilité",
+        series="VXEEMCLS", source="FRED (CBOE)", unit="points", freq="quotidienne",
+        transform="level", agg="mean", lag_months=0, method="minmax", invert=True,
+        why="L'équivalent du VIX pour les actions émergentes. Disponible depuis 2011 : avant, son poids est redistribué.",
+        norm_why="Min-Max inversé : volatilité basse = score élevé. Moyenne mensuelle.",
+        plain_good="les marchés émergents sont plus calmes que d'habitude", plain_bad="les marchés émergents sont plus nerveux que d'habitude",
+    ),
+    dict(
+        id="copper", label="Cuivre (sur 1 an)", zone="Monde", family="Matières premières",
+        series="PCOPPUSDM", source="FRED (FMI)", unit="% sur 1 an", freq="mensuelle",
+        transform="pct12", agg="last", lag_months=1, method="zscore", invert=False,
+        why="Le « docteur cuivre » : sa demande suit l'industrie et la construction, en particulier en Chine. Une hausse signale une activité mondiale soutenue.",
+        norm_why="Z-score : une hausse plus forte que d'habitude fait monter le score.",
+        plain_good="le cuivre monte : la demande industrielle mondiale tient", plain_bad="le cuivre baisse : la demande industrielle mondiale faiblit",
+    ),
+    dict(
+        id="brl", label="Réal brésilien (contre dollar)", zone="Émergents", family="Flux de capitaux",
+        series="DEXBZUS", source="FRED (Réserve fédérale)", unit="% sur 1 an", freq="quotidienne",
+        transform="pct12", agg="last", lag_months=0, method="zscore", invert=True,
+        why="Première économie d'Amérique latine, très sensible aux matières premières et aux flux de capitaux.",
+        norm_why="Z-score inversé : un réal qui baisse fortement fait baisser le score.",
+        plain_good="le réal brésilien tient face au dollar", plain_bad="le réal brésilien faiblit plus que d'habitude",
+    ),
+    dict(
+        id="mxn", label="Peso mexicain (contre dollar)", zone="Émergents", family="Flux de capitaux",
+        series="DEXMXUS", source="FRED (Réserve fédérale)", unit="% sur 1 an", freq="quotidienne",
+        transform="pct12", agg="last", lag_months=0, method="zscore", invert=True,
+        why="Devise émergente la plus échangée, souvent utilisée pour se couvrir contre le risque émergent.",
+        norm_why="Z-score inversé : un peso qui baisse fortement fait baisser le score.",
+        plain_good="le peso mexicain tient face au dollar", plain_bad="le peso mexicain faiblit plus que d'habitude",
+    ),
+    dict(
+        id="inr", label="Roupie indienne (contre dollar)", zone="Inde", family="Flux de capitaux",
+        series="DEXINUS", source="FRED (Réserve fédérale)", unit="% sur 1 an", freq="quotidienne",
+        transform="pct12", agg="last", lag_months=0, method="zscore", invert=True,
+        why="L'Inde dépend des capitaux étrangers pour financer son déficit extérieur : la roupie a chuté en 2013.",
+        norm_why="Z-score inversé : une roupie qui baisse fortement fait baisser le score.",
+        plain_good="la roupie indienne tient face au dollar", plain_bad="la roupie indienne faiblit plus que d'habitude",
+    ),
 ]
 
 # ---------------------------------------------------------------- zones et pondérations
@@ -176,19 +259,25 @@ ZONES = [
          weights_why="Indicateurs de marché, rapides et tournés vers l'avenir (actions, volatilité, conditions financières, courbe des taux) : 15 % chacun. PIB, fondamental mais publié en retard : 15 %. Inflation et dollar, plus indirects : 10 %. Pétrole : 5 %.",
          limits="Le dollar est un proxy imparfait des flux de capitaux. La série S&P 500 de FRED ne couvre qu'environ 10 ans."),
     dict(id="eu", label="Europe", hash="europe",
-         weights=dict(ea_gdp=0.20, ea_cpi=0.15, ea_spread=0.20, ea_curve=0.20, vol=0.15, oil=0.10),
-         weights_why="Croissance, écart de taux Italie-Allemagne et courbe des taux : 20 % chacun, ce sont les signaux propres à la zone euro. Inflation : 15 %. VIX, faute d'indice de volatilité européen gratuit : 15 %. Pétrole, dont l'Europe importe l'essentiel : 10 %.",
-         limits="Pas d'indice boursier européen (Euro Stoxx) en données ouvertes sur FRED : le VIX américain sert de mesure du risque. Les taux OCDE sont des moyennes mensuelles, publiées avec environ un mois de retard."),
+         weights=dict(ea_gdp=0.15, ea_cpi=0.10, ea_spread=0.20, ea_curve=0.15, de_equity=0.20, vol=0.10, oil=0.10),
+         weights_why="Écart de taux Italie-Allemagne et Bourse allemande : 20 % chacun, les deux signaux de marché propres à l'Europe. Croissance et courbe des taux : 15 % chacun. Inflation, VIX (faute d'indice de volatilité européen gratuit) et pétrole, dont l'Europe importe l'essentiel : 10 % chacun.",
+         limits="L'indice boursier zone euro de l'OCDE n'est plus mis à jour sur FRED : la Bourse allemande le remplace. Pas d'indice de volatilité européen gratuit : le VIX américain sert de mesure du risque. Les données OCDE sont des moyennes mensuelles, publiées avec environ un mois de retard."),
     dict(id="asia", label="Asie", hash="asie",
-         weights=dict(jp_gdp=0.20, nikkei=0.25, jp_curve=0.10, cny=0.15, vol=0.15, oil=0.10, usd=0.05),
-         weights_why="Nikkei : 25 %, seul indice boursier asiatique ouvert. Croissance japonaise : 20 %. Yuan et VIX : 15 % chacun. Courbe japonaise et pétrole (l'Asie est importatrice) : 10 %. Dollar fort, qui pèse sur les économies émergentes d'Asie : 5 %.",
-         limits="Périmètre réduit au Japon et à la Chine. Pas d'inflation : la série japonaise de FRED (OCDE) s'arrête en juin 2021, et les séries chinoises en 2025. La Chine n'est représentée que par le yuan. La courbe japonaise a été contrôlée par la Banque du Japon de 2016 à 2024."),
+         weights=dict(jp_gdp=0.15, nikkei=0.15, jp_curve=0.05, kr_equity=0.15, in_equity=0.10, cny=0.10, krw=0.05, vol=0.10, oil=0.10, usd=0.05),
+         weights_why="Trois Bourses (Japon et Corée 15 % chacune, Inde 10 %) et la croissance japonaise (15 %) portent l'essentiel. Yuan, VIX et pétrole (l'Asie est importatrice) : 10 % chacun. Won, courbe japonaise et dollar : 5 % chacun.",
+         limits="Japon, Corée du Sud, Inde et Chine. Pas d'inflation : la série japonaise de FRED (OCDE) s'arrête en juin 2021, et les séries chinoises en 2025. La Chine n'est représentée que par le yuan, et les Bourses coréenne et indienne par des moyennes mensuelles OCDE. La courbe japonaise a été contrôlée par la Banque du Japon de 2016 à 2024."),
 ]
+ZONES.append(
+    dict(id="em", label="Émergents", hash="emergents",
+         weights=dict(em_usd=0.25, em_vol=0.15, copper=0.15, brl=0.10, mxn=0.05, inr=0.05, in_equity=0.10, vol=0.10, oil=0.05),
+         weights_why="Le dollar face aux devises émergentes (25 %) est le signal central des crises émergentes. Volatilité émergente et cuivre, thermomètre de la demande industrielle : 15 % chacun. Réal brésilien, Bourse indienne et VIX : 10 % chacun. Peso mexicain, roupie et pétrole : 5 % chacun.",
+         limits="Pas de Bourse chinoise ni d'écart de crédit émergent sur longue période en données ouvertes. L'indice du dollar émergent commence en 2006 et la volatilité émergente en 2011 : avant, leur poids est redistribué sur les devises, le cuivre et l'Inde."),
+)
 # Poids de chaque zone dans la vue Monde (proches de leur part dans la capitalisation boursière mondiale et le PIB des pays développés).
-GLOBAL_MIX = dict(us=0.45, eu=0.30, asia=0.25)
+GLOBAL_MIX = dict(us=0.40, eu=0.25, asia=0.20, em=0.15)
 GLOBAL = dict(id="global", label="Monde", hash="monde",
-              weights_why="Moyenne des trois zones : États-Unis 45 %, Europe 30 %, Asie 25 %. Le poids d'un indicateur commun (VIX, pétrole, dollar) est la somme de ses poids dans chaque zone.",
-              limits="Le score mondial hérite des limites de chaque zone. Les pays émergents hors Chine ne sont pas couverts.")
+              weights_why="Moyenne des quatre zones : États-Unis 40 %, Europe 25 %, Asie 20 %, Émergents 15 %. Le poids d'un indicateur commun (VIX, pétrole, dollar) est la somme de ses poids dans chaque zone.",
+              limits="Le score mondial hérite des limites de chaque zone.")
 
 # ---------------------------------------------------------------- test sur le passé
 # Épisodes fixés AVANT de regarder le score (sinon le test serait biaisé).
@@ -197,15 +286,19 @@ EPISODES = [
     dict(name="Récession de 2001 (bulle internet)", short="2001", start="2001-03", end="2001-11", source="NBER",
          zones=["global", "us"]),
     dict(name="Crise financière de 2008", short="2008", start="2007-12", end="2009-06", source="NBER",
-         zones=["global", "us", "eu", "asia"]),
+         zones=["global", "us", "eu", "asia", "em"]),
     dict(name="Crise de la dette en zone euro", short="2011", start="2011-05", end="2011-10", source="S&P 500, sommet au creux",
-         zones=["global", "us", "eu", "asia"]),
+         zones=["global", "us", "eu", "asia", "em"]),
     dict(name="Krach boursier chinois", short="2015", start="2015-06", end="2016-01", source="Shanghai Composite, sommet au creux",
-         zones=["global", "asia"]),
+         zones=["global", "asia", "em"]),
+    dict(name="« Taper tantrum » (sorties de capitaux émergents)", short="2013", start="2013-05", end="2013-08",
+         source="annonce de la Fed du 22 mai 2013 au creux de l'été", zones=["em", "asia"]),
+    dict(name="Crise des devises émergentes (Turquie, Argentine)", short="2018", start="2018-04", end="2018-09",
+         source="dates de marché, du début de la chute au creux", zones=["em"]),
     dict(name="Choc du Covid-19", short="2020", start="2020-02", end="2020-04", source="NBER",
-         zones=["global", "us", "eu", "asia"]),
+         zones=["global", "us", "eu", "asia", "em"]),
     dict(name="Hausse des taux de 2022", short="2022", start="2022-01", end="2022-10", source="S&P 500, sommet au creux",
-         zones=["global", "us", "eu", "asia"]),
+         zones=["global", "us", "eu", "asia", "em"]),
 ]
 ALERT_THRESHOLD = 50   # sous ce score, le baromètre est considéré « en alerte »
 LEAD_MONTHS = 12       # fenêtre d'anticipation examinée avant chaque épisode
@@ -239,7 +332,7 @@ def zone_info(zone_id: str) -> dict:
 
 
 def episodes_for(zone_id: str) -> list[dict]:
-    return [e for e in EPISODES if zone_id in e["zones"]]
+    return sorted((e for e in EPISODES if zone_id in e["zones"]), key=lambda e: e["start"])
 
 
 ZONE_IDS = ["global"] + [z["id"] for z in ZONES]

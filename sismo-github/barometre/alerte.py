@@ -37,13 +37,19 @@ FAST_DROP, DROP = -10.0, -5.0
 RISE = 5.0
 
 
-def level(score: Optional[float], change_3m: Optional[float]) -> Optional[int]:
+CUTS = (65.0, 50.0, 35.0)
+
+
+def level(score: Optional[float], change_3m: Optional[float], cuts: tuple = CUTS,
+          drops: tuple = (FAST_DROP, DROP), rise: float = RISE) -> Optional[int]:
+    """Niveau 0-4. `cuts` et `drops` ne servent à changer les seuils que pour le test de solidité."""
     if score is None or pd.isna(score):
         return None
-    base = 0 if score >= 65 else 1 if score >= 50 else 2 if score >= 35 else 3
+    hi, mid, lo = cuts
+    base = 0 if score >= hi else 1 if score >= mid else 2 if score >= lo else 3
     mom = 0
     if change_3m is not None and not pd.isna(change_3m):
-        mom = 2 if change_3m <= FAST_DROP else 1 if change_3m <= DROP else (-1 if change_3m >= RISE else 0)
+        mom = 2 if change_3m <= drops[0] else 1 if change_3m <= drops[1] else (-1 if change_3m >= rise else 0)
     return int(max(0, min(4, base + mom)))
 
 
@@ -51,8 +57,8 @@ def describe(lvl: Optional[int]) -> Optional[dict]:
     return None if lvl is None else dict(LEVELS[lvl])
 
 
-def series(comp: pd.Series) -> pd.Series:
+def series(comp: pd.Series, **kw) -> pd.Series:
     """Niveau d'alerte mois par mois, à partir de la série du score composite."""
     comp = comp.dropna()
     d3 = comp - comp.shift(3)
-    return pd.Series([level(s, d) for s, d in zip(comp.values, d3.values)], index=comp.index, dtype="float")
+    return pd.Series([level(s, d, **kw) for s, d in zip(comp.values, d3.values)], index=comp.index, dtype="float")

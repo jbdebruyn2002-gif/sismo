@@ -46,7 +46,20 @@ def make_raw(as_of: date, seed: int = 7, years: int = 36) -> dict[str, pd.Series
     jp10 = np.clip(ar(len(mo), 0.8, 0.08, 0.98), -0.3, 3)
     jp3m = jp10 - np.clip(ar(len(mo), 0.6, 0.08, 0.95), -0.5, 2)
     cny = 7 * np.cumprod(1 + rng.normal(0, 0.0015, len(bd)))
-    return {
+    walk = lambda n, sd, mu=0.0, start=100.0: start * np.cumprod(1 + rng.normal(mu, sd, n))
+    extra = {
+        "SPASTT01DEM661N": pd.Series(walk(len(mo), 0.045, 0.004), index=mo),
+        "SPASTT01KRM661N": pd.Series(walk(len(mo), 0.055, 0.005), index=mo),
+        "SPASTT01INM661N": pd.Series(walk(len(mo), 0.055, 0.008), index=mo),
+        "DEXKOUS": pd.Series(walk(len(bd), 0.004, 0, 1100), index=bd),
+        "DTWEXEMEGS": pd.Series(walk(len(bd), 0.002, 0.00005), index=bd),
+        "VXEEMCLS": pd.Series(np.clip(22 + ar(len(bd), 0, 1.0, 0.98), 12, 80), index=bd),
+        "PCOPPUSDM": pd.Series(walk(len(mo), 0.05, 0.003, 3000), index=mo),
+        "DEXBZUS": pd.Series(walk(len(bd), 0.007, 0.0001, 2), index=bd),
+        "DEXMXUS": pd.Series(walk(len(bd), 0.005, 0.0001, 10), index=bd),
+        "DEXINUS": pd.Series(walk(len(bd), 0.003, 0.0001, 40), index=bd),
+    }
+    return {**extra,
         "CLVMNACSCAB1GQEA": pd.Series(ea_gdp, index=q),
         "CP0000EZCCM086NEST": pd.Series(hicp, index=mo),
         "IRLTLT01ITM156N": pd.Series(it10, index=mo),
