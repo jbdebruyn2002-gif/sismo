@@ -32,12 +32,35 @@ def trend(change_3m: Optional[float]) -> tuple[str, str]:
     return "stables", "flat"
 
 
+def verdict_sentence(zone: str, score: float, d3: Optional[float], al: dict) -> str:
+    """Verdict tranché : niveau d'alerte, puis niveau et vitesse du score en clair."""
+    sc = round(score)
+    pts = "" if d3 is None else f"{abs(d3):.0f} point{'s' if abs(round(d3)) > 1 else ''}"
+    head = f"{zone} : {al['label'].lower()} (niveau {al['level']} sur 4)."
+    if d3 is None:
+        body = f"Score de {sc}/100."
+    elif sc >= 50 and d3 <= -5:
+        body = f"Les conditions restent favorables ({sc}/100) mais se dégradent vite : {pts} perdus en 3 mois."
+    elif sc < 50 and d3 <= -5:
+        body = f"Les conditions sont devenues défavorables ({sc}/100) et continuent de se dégrader : {pts} perdus en 3 mois."
+    elif sc < 50 and d3 >= 5:
+        body = f"Les conditions restent défavorables ({sc}/100) mais s'améliorent : {pts} gagnés en 3 mois."
+    elif sc < 50:
+        body = f"Les conditions sont défavorables ({sc}/100) et ne s'améliorent pas."
+    elif d3 >= 5:
+        body = f"Les conditions sont favorables ({sc}/100) et s'améliorent : {pts} gagnés en 3 mois."
+    else:
+        body = f"Les conditions sont favorables ({sc}/100) et stables."
+    return f"{head} {body}"
+
+
 def build(res: dict, zone_label: str) -> dict:
     c = res["composite"]
     avail = [i for i in res["indicators"] if i["available"]]
     word, direction = trend(c.get("change_3m"))
     verdict = VERDICT.get(c["label"], c["label"].lower())
-    headline = f"{zone_label} : {verdict}, {word} sur 3 mois."
+    al = c.get("alert")
+    headline = verdict_sentence(zone_label, c["score"], c.get("change_3m"), al) if al else f"{zone_label} : {verdict}, {word} sur 3 mois."
 
     helps = sorted([i for i in avail if i["contribution"] > MIN_CONTRIB], key=lambda i: -i["contribution"])[:3]
     hurts = sorted([i for i in avail if i["contribution"] < -MIN_CONTRIB], key=lambda i: i["contribution"])[:3]
@@ -50,11 +73,17 @@ def build(res: dict, zone_label: str) -> dict:
     reliability = None
     if bt.get("available") and bt["summary"]["episodes_covered"]:
         sm = bt["summary"]
-        reliability = (f"Sur le passé, ce score est passé sous {sm['threshold']} avant {sm['episodes_signaled']} des "
-                       f"{sm['episodes_covered']} crises testées, avec {sm['false_alert_share']:.0f} % de fausses alertes.")
+        if sm.get("alert_share_crisis_lvl") is not None:
+            reliability = (f"Sur le passé, le niveau Alerte (3 ou plus) a été atteint pendant {sm['alert_share_crisis_lvl']:.0f} % "
+                           f"des mois de crise, contre {sm['alert_false_share_lvl']:.0f} % des mois calmes, et il a précédé "
+                           f"{sm['episodes_alerted']} des {sm['episodes_covered']} crises testées.")
+        else:
+            reliability = (f"Sur le passé, ce score est passé sous {sm['threshold']} avant {sm['episodes_signaled']} des "
+                           f"{sm['episodes_covered']} crises testées, avec {sm['false_alert_share']:.0f} % de fausses alertes.")
 
     return dict(
         headline=headline, verdict=_cap(verdict), trend=word, direction=direction,
+        meaning=al["meaning"] if al else None,
         helps=[dict(id=i["id"], text=_cap(i["plain_good"] or i["label"]), points=round(i["contribution"], 1)) for i in helps],
         hurts=[dict(id=i["id"], text=_cap(i["plain_bad"] or i["label"]), points=round(i["contribution"], 1)) for i in hurts],
         watch=watch, reliability=reliability,

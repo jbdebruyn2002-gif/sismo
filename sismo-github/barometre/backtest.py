@@ -14,6 +14,7 @@ from typing import Optional
 
 import pandas as pd
 
+from . import alerte
 from .config import ALERT_THRESHOLD, EPISODES, LEAD_MONTHS
 
 
@@ -27,6 +28,11 @@ def _f(v) -> Optional[float]:
 
 def _month(s: str) -> pd.Timestamp:
     return pd.Timestamp(s + "-01") + pd.offsets.MonthEnd(0)
+
+
+def _lvl_max(comp: pd.Series, a, b) -> Optional[int]:
+    lv = alerte.series(comp).loc[a:b].dropna()
+    return int(lv.max()) if len(lv) else None
 
 
 def episode_stats(comp: pd.Series, equal: pd.Series, ep: dict) -> dict:
@@ -54,6 +60,8 @@ def episode_stats(comp: pd.Series, equal: pd.Series, ep: dict) -> dict:
         drop=_f(during.min() - comp.loc[before_t]),
         lead_months=lead,
         signaled=lead is not None,
+        alert_before=_lvl_max(comp, before_t, start),
+        alert_during=_lvl_max(comp, start, end),
         eq_before=_f(equal.get(before_t)),
         eq_min=_f(eq_during.min()) if len(eq_during) else None,
     )
@@ -88,7 +96,16 @@ def run(comp: pd.Series, equal: pd.Series, episodes: list[dict] = EPISODES) -> d
         episodes_signaled=sum(1 for e in covered if e["signaled"]),
         threshold=ALERT_THRESHOLD, lead_months=LEAD_MONTHS,
     )
-    history = [[t.date().isoformat(), _f(comp.loc[t]), _f(equal.loc[t])] for t in comp.index]
+    lv = alerte.series(comp)
+    high = lv >= alerte.ALERT_FROM
+    summary.update(
+        alert_from=alerte.ALERT_FROM,
+        alert_share_crisis_lvl=_f(100 * high[in_crisis].mean()) if in_crisis.any() else None,
+        alert_false_share_lvl=_f(100 * high[calm].mean()) if calm.any() else None,
+        episodes_alerted=sum(1 for e in covered if e.get("alert_before") is not None and e["alert_before"] >= alerte.ALERT_FROM),
+    )
+    history = [[t.date().isoformat(), _f(comp.loc[t]), _f(equal.loc[t]), None if pd.isna(lv.loc[t]) else int(lv.loc[t])]
+               for t in comp.index]
     return dict(available=True, summary=summary, episodes=eps, history=history, commentary=commentary(summary, eps))
 
 
@@ -97,6 +114,10 @@ def commentary(sm: dict, eps: list[dict]) -> list[str]:
     cov = [e for e in eps if e["covered"]]
     if not cov:
         return ["Historique trop court : aucun épisode de crise n'est couvert par le score."]
+    if sm.get("alert_share_crisis_lvl") is not None and sm.get("alert_false_share_lvl") is not None:
+        out.append(f"Échelle d'alerte : niveau {sm['alert_from']} ou plus pendant {sm['alert_share_crisis_lvl']:.0f} % des mois "
+                   f"de crise, contre {sm['alert_false_share_lvl']:.0f} % des mois calmes ; {sm['episodes_alerted']} crise(s) sur "
+                   f"{sm['episodes_covered']} précédée(s) d'une alerte dans les {sm['lead_months']} mois.")
     out.append(f"{sm['episodes_signaled']} épisode(s) sur {sm['episodes_covered']} couverts ont été précédés d'un score "
                f"sous {sm['threshold']} dans les {sm['lead_months']} mois avant leur début.")
     if sm["mean_crisis"] is not None and sm["mean_calm"] is not None:

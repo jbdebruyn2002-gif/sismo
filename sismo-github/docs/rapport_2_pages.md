@@ -44,6 +44,9 @@ Données téléchargées le 2 novembre 2026 depuis FRED (18 séries). Règle de 
 *(Insérer capture du tableau de bord réel et les phrases de « Lecture du jour ».)*
 Indicateurs les plus lourds aujourd'hui : *(à remplir avec les contributions réelles)*. Signaux : *(à remplir)*.
 
+### Échelle d'alerte sismique (0 à 4)
+Le verdict combine le niveau du score et sa vitesse de baisse sur 3 mois (base : ≥65 → 0, 50-65 → 1, 35-50 → 2, <35 → 3 ; chute ≥10 pts → +2, 5-10 pts → +1, hausse ≥5 pts → −1). Justification : une dégradation rapide est un signal en soi, même quand le niveau reste correct. Résultat (Monde, données réelles) : niveau ≥3 pendant 62 % des mois de crise contre 7 % des mois calmes, soit deux fois moins de fausses alertes que la règle « score sous 50 » (17 %), et 5 crises sur 6 précédées d'une alerte.
+
 ### Test sur le passé
 Six épisodes datés à l'avance (récessions NBER 2001, 2008, 2020 ; baisses du S&P 500 de 2011 et 2022 ; krach chinois de 2015), chaque zone n'étant testée que sur les épisodes qui la concernent. Pour chacun : score 12 mois avant, plus bas pendant l'épisode, signal anticipé (score sous 50 dans les 12 mois précédents). Résultats réels : *(à remplir depuis la section « Test sur le passé » : crises signalées x/5, score moyen en crise vs en période calme, taux de fausses alertes)*. Le même calcul à poids égaux montre si la conclusion dépend de la pondération.
 

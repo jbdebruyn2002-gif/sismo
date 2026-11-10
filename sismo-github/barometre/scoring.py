@@ -18,7 +18,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from . import backtest
+from . import alerte, backtest
 from .config import EPISODES, INDICATORS, MAX_AGE_MONTHS, MIN_MONTHS, MIN_WEIGHT_SHARE, REGIMES, WINDOW_MONTHS
 
 try:  # pandas >= 2.2 utilise "ME" ; les versions plus anciennes "M"
@@ -232,6 +232,8 @@ def compute(raw: dict[str, pd.Series], as_of: date, indicators: Optional[list[di
         },
         "indicators": inds,
     }
+    lv = alerte.level(float(comp.loc[t]), ch(3))
+    result["composite"]["alert"] = alerte.describe(lv)
     result["commentary"] = commentary(result)
     result["backtest"] = backtest.run(comp.loc[:t], equal.loc[:t], episodes)
     return result

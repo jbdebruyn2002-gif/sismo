@@ -21,7 +21,7 @@
   --page:#eef1f0;--surface:#ffffff;--ink:#18212b;--ink2:#55606b;--muted:#8a949d;
   --grid:#dfe5e3;--axis:#c4ccca;--border:rgba(24,33,43,.12);--paperline:rgba(37,80,201,.075);
   --accent:#2550c9;--track:#d6e0f7;--pos:#2550c9;--neg:#d0453f;
-  --good:#0f9a3a;--warning:#e8a317;--critical:#cf3d36;
+  --good:#0f9a3a;--warning:#e8a317;--serious:#e0650f;--critical:#cf3d36;
   --up:#0b7a2f;--down:#cf3d36;
   --note-bg:#fdf3d8;--note-ink:#5f4300;--note-line:#e9cf84;
   --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -32,7 +32,7 @@
     --page:#0f1418;--surface:#172027;--ink:#e7edf0;--ink2:#a9b4bc;--muted:#7c8891;
     --grid:#26313a;--axis:#36424c;--border:rgba(255,255,255,.10);--paperline:rgba(125,159,240,.09);
     --accent:#7d9ff0;--track:#1d2c52;--pos:#7d9ff0;--neg:#ec6b64;
-    --good:#2fbf5c;--up:#2fbf5c;--down:#ec6b64;
+    --good:#2fbf5c;--serious:#f08a3c;--critical:#ec5b53;--up:#2fbf5c;--down:#ec6b64;
     --note-bg:#3a2f14;--note-ink:#f0d58a;--note-line:#6b5420;
     color-scheme:dark;
   }
@@ -41,7 +41,7 @@
   --page:#0f1418;--surface:#172027;--ink:#e7edf0;--ink2:#a9b4bc;--muted:#7c8891;
   --grid:#26313a;--axis:#36424c;--border:rgba(255,255,255,.10);--paperline:rgba(125,159,240,.09);
   --accent:#7d9ff0;--track:#1d2c52;--pos:#7d9ff0;--neg:#ec6b64;
-  --good:#2fbf5c;--up:#2fbf5c;--down:#ec6b64;
+  --good:#2fbf5c;--serious:#f08a3c;--critical:#ec5b53;--up:#2fbf5c;--down:#ec6b64;
   --note-bg:#3a2f14;--note-ink:#f0d58a;--note-line:#6b5420;
   color-scheme:dark;
 }
@@ -222,7 +222,7 @@ body:not(.simple) .b-more{display:none}
 
 /* stations (zones) */
 .stations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-@media(max-width:760px){.stations{grid-template-columns:repeat(2,minmax(0,1fr))}.st .rg span{position:absolute;left:-9999px}.st .sc{font-size:26px}}
+@media(max-width:760px){.stations{grid-template-columns:repeat(2,minmax(0,1fr))}.st .rg b{position:absolute;left:-9999px}.st .rg .lv::before{content:"niveau "}.st .sc{font-size:26px}}
 #alerts:empty{display:none}
 .st{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:end;gap:2px 10px;text-align:left;
   border:1px solid var(--border);border-radius:12px;background:transparent;color:var(--ink);padding:12px 14px;cursor:pointer;min-width:0}
@@ -256,6 +256,19 @@ body:not(.simple) .b-more{display:none}
 .how{margin-top:10px;font-size:13.5px;color:var(--ink2)}
 .how summary{cursor:pointer;color:var(--ink2)}
 .how p{margin-top:6px;max-width:70ch}
+
+/* échelle d'alerte */
+.alert-badge{display:inline-flex;align-items:center;gap:9px;border-radius:10px;padding:8px 14px 8px 10px;font-weight:600;font-size:17px;
+  background:color-mix(in srgb,var(--al) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--al) 45%,transparent)}
+.alert-badge svg{width:20px;height:20px;flex:none}
+.alert-badge small{font-weight:500;font-size:13px;color:var(--ink2)}
+.scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;margin-top:12px;max-width:260px}
+.scale span{height:8px;border-radius:2px;background:var(--grid)}
+.scale span.on{background:var(--al)}
+.scale-lab{display:flex;justify-content:space-between;max-width:260px;font-size:11.5px;color:var(--ink2);margin-top:4px}
+.meaning{margin-top:10px;font-size:15px;font-weight:500;max-width:60ch}
+.st .rg b{font-weight:600;color:var(--ink)}
+.st .rg .lv::before{content:" · "}
 
 /* pourquoi */
 .why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
@@ -441,6 +454,7 @@ function slice(arr){return arr.slice(-Math.min(arr.length,range))}
 function icon(kind){
   var s=S("svg",{viewBox:"0 0 20 20","aria-hidden":"true"});
   if(kind==="good"){S("circle",{cx:10,cy:10,r:9,fill:"var(--good)"},s);S("path",{d:"M5.8 10.4l2.8 2.8 5.6-6",fill:"none",stroke:"#fff","stroke-width":2,"stroke-linecap":"round","stroke-linejoin":"round"},s)}
+  else if(kind==="serious"){S("path",{d:"M10 1.8l8.6 15.4H1.4z",fill:"var(--serious)"},s);S("path",{d:"M10 7.6v4.4",stroke:"#fff","stroke-width":2,"stroke-linecap":"round"},s);S("circle",{cx:10,cy:14.4,r:1.1,fill:"#fff"},s)}
   else if(kind==="warning"){S("path",{d:"M10 1.8l8.6 15.4H1.4z",fill:"var(--warning)"},s);S("path",{d:"M10 7.6v4.4",stroke:"#0b0b0b","stroke-width":2,"stroke-linecap":"round"},s);S("circle",{cx:10,cy:14.4,r:1.1,fill:"#0b0b0b"},s)}
   else{S("circle",{cx:10,cy:10,r:9,fill:"var(--critical)"},s);S("path",{d:"M6.6 6.6l6.8 6.8M13.4 6.6l-6.8 6.8",stroke:"#fff","stroke-width":2,"stroke-linecap":"round"},s)}
   return s}
@@ -460,16 +474,24 @@ function sparkPath(vals,W,Ht){
   ALL.zones.forEach(function(z){
     var zc=z.composite,sp=S("svg",{"class":"sp",viewBox:"0 0 200 26",preserveAspectRatio:"none","aria-hidden":"true"});
     S("path",{d:sparkPath(zc.history.slice(-24).map(function(h){return h[1]}),200,26),"vector-effect":"non-scaling-stroke"},sp);
-    var b=H("button",{type:"button",cls:"st","aria-pressed":String(z.id===D.id),"aria-label":z.label+", score "+Math.round(zc.score)+" sur 100, "+zc.label},
+    var b=H("button",{type:"button",cls:"st","aria-pressed":String(z.id===D.id),"aria-label":z.label+", score "+Math.round(zc.score)+" sur 100, "+(zc.alert?zc.alert.label+", niveau "+zc.alert.level+" sur 4":zc.label)},
       H("span",{cls:"nm",text:z.label}),H("span",{cls:"sc",text:String(Math.round(zc.score))}),
-      H("span",{cls:"rg"},icon(zc.kind),H("span",{text:zc.label})),sp);
+      zc.alert?H("span",{cls:"rg"},icon(zc.alert.kind),H("span",{cls:"al"},H("b",{text:zc.alert.label}),H("span",{cls:"lv",text:zc.alert.level+"/4"}))):H("span",{cls:"rg"},icon(zc.kind),H("span",{text:zc.label})),sp);
     b.onclick=function(){goZone(z)};box.appendChild(b)})
 })();
 (function brief(){
   var B=D.summary||{};
   $("bZone").textContent=D.id==="global"?"Monde, moyenne des trois zones":D.label;
   $("bScore").textContent=Math.round(C.score);
-  $("bRegime").appendChild(H("span",{cls:"regime"},icon(C.kind),H("span",{text:C.label})));
+  var AL=C.alert,COL={good:"var(--good)",warning:"var(--warning)",serious:"var(--serious)",critical:"var(--critical)"};
+  if(AL){
+    var rg=$("bRegime");rg.style.setProperty("--al",COL[AL.kind]);
+    rg.appendChild(H("span",{cls:"alert-badge"},icon(AL.kind),H("span",{text:AL.label}),H("small",{text:"niveau "+AL.level+" sur 4"})));
+    var sc=H("div",{cls:"scale",role:"img","aria-label":"Échelle d'alerte : niveau "+AL.level+" sur 4"});
+    for(var k=0;k<=4;k++)sc.appendChild(H("span",{cls:k<=AL.level?"on":""}));
+    rg.appendChild(sc);rg.appendChild(H("div",{cls:"scale-lab"},H("span",{text:"calme"}),H("span",{text:"séisme"})));
+  }else{$("bRegime").appendChild(H("span",{cls:"regime"},icon(C.kind),H("span",{text:C.label})))}
+  if(B.meaning){var hd=$("bHead");hd.parentNode.insertBefore(H("p",{cls:"meaning",text:B.meaning}),hd.nextSibling)}
   $("bHead").textContent=B.headline||"";
   var dl=$("bDeltas");
   [["sur 3 mois",C.change_3m],["sur 12 mois",C.change_12m]].forEach(function(p){dl.appendChild(H("span",null,delta(p[1]," pt")," "+p[0]))});
@@ -688,6 +710,7 @@ function drawCards(){
     ["5. Pondération et agrégation","Moyenne pondérée des scores disponibles. Le score global moins 50 est la somme des contributions de chaque indicateur."]];
   var ol=$("steps");steps.forEach(function(s){ol.appendChild(H("li",null,H("b",{text:s[0]}),H("span",{text:s[1]})))});
   $("mNorm").textContent="Méthodes de normalisation : Min-Max (bornes aux percentiles 2 % et 98 % des "+(META.window_months||120)+" derniers mois, pour limiter l'effet des valeurs extrêmes), Z-score (50 + 20 × écart à la moyenne en écarts-types, borné à 0 et 100), et distance à une cible (inflation 2 %, pétrole stable). Les indicateurs où une valeur haute est défavorable (volatilité, stress financier, dollar fort) sont inversés. La fenêtre ne contient que le passé : le score d'un mois ne change pas quand de nouvelles données arrivent.";
+  var mn=$("mNorm");mn.parentNode.insertBefore(H("p",{text:"Échelle d'alerte (0 à 4) : elle combine le niveau du score et sa vitesse de baisse. Base : score de 65 ou plus → 0, de 50 à 65 → 1, de 35 à 50 → 2, sous 35 → 3. Vitesse : chute de 10 points ou plus en 3 mois → +2, chute de 5 à 10 points → +1, hausse de 5 points ou plus → −1. Niveaux : 0 calme, 1 secousses légères, 2 vigilance, 3 alerte, 4 séisme. Règle fixée à l'avance, puis vérifiée sur le test sur le passé."}),mn.nextSibling);
   var w=AV.slice().sort(function(a,b){return b.weight-a.weight}).map(function(i){return i.label+" "+nf(i.weight*100,0)+" %"}).join(" · ");
   $("mWeights").textContent="Pondérations ("+D.label+") : "+w+". "+D.weights_why+" Le test « poids égaux » du graphique montre si le message du score tient pour une autre pondération.";
   $("mLimits").textContent="Limites ("+D.label+") : "+D.limits+" Le score décrit les conditions actuelles et ne prévoit pas les marchés. Ce n'est pas un conseil en investissement."})();
@@ -701,10 +724,10 @@ function btSetup(){
   var sm=BT.summary;
   if(META.demo)$("btNote").appendChild(H("div",{cls:"note"},H("b",{text:"Données simulées : "}),"ce test n'a aucune valeur tant que les vraies données ne sont pas chargées. Les crises sont réelles, les scores sont inventés."));
   var tiles=[
-    ["Crises signalées à l'avance",sm.episodes_signaled+" / "+sm.episodes_covered,"score sous "+sm.threshold+" dans les "+sm.lead_months+" mois avant"],
-    ["Score moyen pendant les crises",nf(sm.mean_crisis,0)+" / 100","contre "+nf(sm.mean_calm,0)+" en période calme"],
-    ["Mois en alerte pendant les crises",nf(sm.alert_share_crisis,0)+" %","score sous "+sm.threshold],
-    ["Fausses alertes",nf(sm.false_alert_share,0)+" %","des mois calmes, loin de toute crise"]];
+    ["Crises précédées d'une alerte",sm.episodes_alerted+" / "+sm.episodes_covered,"niveau "+sm.alert_from+" ou plus dans les "+sm.lead_months+" mois avant"],
+    ["Mois de crise en alerte",nf(sm.alert_share_crisis_lvl,0)+" %","niveau "+sm.alert_from+" ou plus"],
+    ["Fausses alertes",nf(sm.alert_false_share_lvl,0)+" %","des mois calmes, loin de toute crise"],
+    ["Score moyen pendant les crises",nf(sm.mean_crisis,0)+" / 100","contre "+nf(sm.mean_calm,0)+" en période calme"]];
   var tb=$("btTiles");tiles.forEach(function(t){tb.appendChild(H("div",{cls:"tile"},H("span",{cls:"lbl",text:t[0]}),H("b",{text:t[1]}),H("small",{text:t[2]})))});
   var lg=$("btLegend");
   lg.appendChild(H("span",null,H("i",{cls:"key-l",style:"background:var(--accent)"}),"Score global"));
@@ -712,15 +735,15 @@ function btSetup(){
   lg.appendChild(H("span",null,H("i",{cls:"key-r",style:"background:var(--ink);opacity:.15"}),"Crise"));
   // tableau des épisodes
   var t=$("btTable");
-  var heads=["Épisode","Période","12 mois avant","Au début","Plus bas","Variation","Signal anticipé","Plus bas à poids égaux"];
+  var heads=["Épisode","Période","12 mois avant","Au début","Plus bas","Variation","Alerte max. avant","Alerte max. pendant","Plus bas à poids égaux"];
   t.appendChild(H("thead",null,H("tr",null,heads.map(function(h){return H("th",{text:h})}))));
   var body=H("tbody");
   BT.episodes.forEach(function(e){
     var per=fmon(e.start)+" – "+fmon(e.end);
-    if(!e.covered){body.appendChild(H("tr",null,H("td",{text:e.name}),H("td",{text:per}),H("td",{cls:"txt",colspan:"6",text:"Hors de l'historique disponible"})));return}
-    var sig=e.signaled?(e.lead_months===0?"Oui, au début":"Oui, "+e.lead_months+" mois avant"):"Non";
+    if(!e.covered){body.appendChild(H("tr",null,H("td",{text:e.name}),H("td",{text:per}),H("td",{cls:"txt",colspan:"7",text:"Hors de l'historique disponible"})));return}
+    var LB=["Calme","Secousses","Vigilance","Alerte","Séisme"],lvt=function(v){return v==null?"–":v+" ("+LB[v]+")"};
     body.appendChild(H("tr",null,H("td",{text:e.name}),H("td",{text:per+" ("+e.source+")"}),H("td",{text:nf(e.score_before,0)}),H("td",{text:nf(e.score_start,0)}),
-      H("td",{text:nf(e.score_min,0)+" ("+fshort(e.min_date)+")"}),H("td",{text:sg(e.drop,0)+" pt"}),H("td",{text:sig}),H("td",{text:nf(e.eq_min,0)})))});
+      H("td",{text:nf(e.score_min,0)+" ("+fshort(e.min_date)+")"}),H("td",{text:sg(e.drop,0)+" pt"}),H("td",{text:lvt(e.alert_before)}),H("td",{text:lvt(e.alert_during)}),H("td",{text:nf(e.eq_min,0)})))});
   t.appendChild(body);
   var ul=$("btReading");BT.commentary.forEach(function(c){ul.appendChild(H("li",{text:c}))});
   $("btLimits").textContent="Limites du test : FRED fournit les séries révisées (PIB, inflation), pas les chiffres publiés à l'époque ; un test strictement en temps réel utiliserait la base ALFRED. "+BT.episodes.length+" épisodes, c'est peu pour conclure statistiquement. Les séries ne commencent pas toutes en même temps (dollar en 2006, S&P 500 sur FRED depuis environ 10 ans) : avant, leur poids est redistribué. Variation = plus bas pendant l'épisode moins score 12 mois avant.";
