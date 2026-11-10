@@ -200,6 +200,10 @@ body:not(.simple) .b-more{display:none}
 .b-rel{color:var(--ink2);font-size:13px}
 .b-more{margin:0}
 
+.grid9 td{text-align:center}
+.grid9 td.ref{font-weight:650;outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px}
+#naiveTable tr.me td{font-weight:600}
+
 /* zones */
 .zs{display:grid;grid-template-columns:minmax(0,1fr);gap:2px;margin-top:18px;border-top:1px solid var(--grid);padding-top:12px}
 .zs button{display:grid;grid-template-columns:minmax(80px,auto) 2.6ch minmax(60px,1fr);align-items:center;gap:10px;border:0;background:transparent;color:var(--ink);text-align:left;padding:5px 6px;border-radius:6px;cursor:pointer}
@@ -221,7 +225,8 @@ body:not(.simple) .b-more{display:none}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:500}
 
 /* stations (zones) */
-.stations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stations{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+@media(max-width:1020px){.stations{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.stations{grid-template-columns:repeat(2,minmax(0,1fr))}.st .rg b{position:absolute;left:-9999px}.st .rg .lv::before{content:"niveau "}.st .sc{font-size:26px}}
 #alerts:empty{display:none}
 .st{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:end;gap:2px 10px;text-align:left;
@@ -402,6 +407,12 @@ footer a{color:var(--accent)}
     <p class="caption"><button class="toggle" id="btToggle" type="button">Voir en tableau</button> · Bandes grises : épisodes de crise, datés à l'avance (récessions officielles du NBER, ou du sommet au creux d'un indice boursier). Pointillés : seuil d'alerte.</p>
     <h3 style="margin:20px 0 10px">Épisode par épisode</h3>
     <div class="tablewrap"><table id="btTable"></table></div>
+    <h3 style="margin:22px 0 6px">Sismo face à des règles simples</h3>
+    <p class="caption" style="margin:0 0 10px">Mêmes crises, même fenêtre de 12 mois, mêmes mois calmes. Une bonne règle annonce beaucoup de crises avec peu de fausses alertes.</p>
+    <div class="tablewrap"><table id="naiveTable"></table></div>
+    <h3 style="margin:22px 0 6px">Solidité des seuils</h3>
+    <p class="caption" style="margin:0 0 10px" id="gridCap"></p>
+    <div class="tablewrap"><table id="gridTable" class="grid9"></table></div>
     <ul class="reading" id="btReading"></ul>
     <p class="caption" id="btLimits"></p>
   </section>
@@ -482,7 +493,7 @@ function delta(v,unit){
   return H("span",{cls:k,text:arrow+" "+sg(v,0)+(unit||"")})}
 
 /* ---------- en-tête, bandeaux ---------- */
-$("sub").textContent="Baromètre macro-financier de quatre zones, données FRED au "+fdate(D.as_of)+".";
+$("sub").textContent="Baromètre macro-financier : quatre zones et le Monde, données FRED au "+fdate(D.as_of)+".";
 function sparkPath(vals,W,Ht){
   var v=vals.filter(function(x){return x!=null});if(v.length<2)return"";
   var mn=Math.min.apply(null,v.concat([35])),mx=Math.max.apply(null,v.concat([65])),rg=mx-mn||1;
@@ -499,7 +510,7 @@ function sparkPath(vals,W,Ht){
 })();
 (function brief(){
   var B=D.summary||{};
-  $("bZone").textContent=D.id==="global"?"Monde, moyenne des trois zones":D.label;
+  $("bZone").textContent=D.id==="global"?"Monde, moyenne des quatre zones":D.label;
   $("bScore").textContent=Math.round(C.score);
   var AL=C.alert,COL={good:"var(--good)",warning:"var(--warning)",serious:"var(--serious)",critical:"var(--critical)"};
   if(AL){
@@ -796,6 +807,23 @@ function btSetup(){
     body.appendChild(H("tr",null,H("td",{text:e.name}),H("td",{text:per+" ("+e.source+")"}),H("td",{text:nf(e.score_before,0)}),H("td",{text:nf(e.score_start,0)}),
       H("td",{text:nf(e.score_min,0)+" ("+fshort(e.min_date)+")"}),H("td",{text:sg(e.drop,0)+" pt"}),H("td",{text:lvt(e.alert_before)}),H("td",{text:lvt(e.alert_during)}),H("td",{text:nf(e.eq_min,0)})))});
   t.appendChild(body);
+  var RB=BT.robustness;
+  if(RB&&RB.naive){
+    var nt=$("naiveTable");
+    nt.appendChild(H("thead",null,H("tr",null,["Règle","Crises annoncées dans l'année","Mois de crise signalés","Fausses alertes (mois calmes)"].map(function(h){return H("th",{text:h})}))));
+    nt.appendChild(H("tbody",null,RB.naive.map(function(r,k){return H("tr",{cls:k===0?"me":""},H("td",{text:r.name}),H("td",{text:r.alerted+" sur "+r.covered}),H("td",{text:nf(r.crisis,0)+" %"}),H("td",{text:nf(r.false,0)+" %"}))})));
+    var g=RB.grid,gs=RB.summary;
+    $("gridCap").textContent="Le test refait avec 9 variantes de la règle : seuils de niveau (65, 50, 35) décalés de −5, 0 ou +5 points, et seuils de vitesse plus ou moins sensibles. Chaque case : fausses alertes · crises annoncées sur "+gs.covered+". La case encadrée est la règle utilisée.";
+    var gt=$("gridTable"),cols=[[-8,-4,"Vitesse plus sensible (−8 / −4 pts)"],[-10,-5,"Référence (−10 / −5 pts)"],[-12,-6,"Vitesse moins sensible (−12 / −6 pts)"]];
+    gt.appendChild(H("thead",null,H("tr",null,[H("th",{text:"Seuils de niveau"})].concat(cols.map(function(c){return H("th",{text:c[2]})})))));
+    var tb2=H("tbody");
+    [-5,0,5].forEach(function(sh){
+      var tr=H("tr",null,H("th",{text:(sh===0?"Référence (65 / 50 / 35)":(sh>0?"+5 points (plus prudent)":"−5 points (plus strict)"))}));
+      cols.forEach(function(c){var cell=g.filter(function(x){return x.shift===sh&&x.drops[0]===c[0]})[0];
+        tr.appendChild(H("td",{cls:(sh===0&&c[0]===-10)?"ref":"",text:cell?nf(cell.false,0)+" % · "+cell.alerted+"/"+cell.covered:"–"}))});
+      tb2.appendChild(tr)});
+    gt.appendChild(tb2);
+  }
   var ul=$("btReading");BT.commentary.forEach(function(c){ul.appendChild(H("li",{text:c}))});
   $("btLimits").textContent="Limites du test : FRED fournit les séries révisées (PIB, inflation), pas les chiffres publiés à l'époque ; un test strictement en temps réel utiliserait la base ALFRED. "+BT.episodes.length+" épisodes, c'est peu pour conclure statistiquement. Les séries ne commencent pas toutes en même temps (dollar en 2006, S&P 500 sur FRED depuis environ 10 ans) : avant, leur poids est redistribué. Variation = plus bas pendant l'épisode moins score 12 mois avant.";
   $("btToggle").onclick=function(){var tw=$("btLineTable"),b=$("btBox"),on=tw.hidden;tw.hidden=!on;b.hidden=on;this.textContent=on?"Voir le graphique":"Voir en tableau";if(!on)drawBt()};
